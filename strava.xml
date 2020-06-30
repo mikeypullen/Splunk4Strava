@@ -1,0 +1,317 @@
+<form>
+  <label>Strava</label>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time" searchWhenChanged="true">
+      <label></label>
+      <default>
+        <earliest>0</earliest>
+        <latest></latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Total number of bike rides in time period</title>
+      <single>
+        <search>
+          <query>index=strava 
+type=Ride  | dedup _time
+| stats count</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Longest elapsed time</title>
+      <single>
+        <search>
+          <query>index=strava type=Ride  | dedup _time 
+| eval ride_time=tostring(max(elapsed_time), "duration")
+| table ride_time 
+| sort - ride_time 
+| head 1</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Longest moving time</title>
+      <single>
+        <search>
+          <query>index=strava type=Ride  | dedup _time 
+| eval ride_time=tostring(max(moving_time), "duration")
+| table ride_time 
+| sort - ride_time 
+| head 1</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Count of bike rides per month</title>
+      <chart>
+        <search>
+          <query>index=strava 
+type=Ride  | dedup _time
+| timechart span=1month count</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Max distance ridden per month (Km)</title>
+      <chart>
+        <search>
+          <query>index=strava 
+type=Ride  | dedup _time
+| eval dist = round((distance/1000),2)
+| timechart max(dist)</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Total elevation gain</title>
+      <chart>
+        <search>
+          <query>index=strava type=Ride  | dedup _time   | timechart span=1d max(total_elevation_gain)</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">log</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">minmax</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <drilldown>
+          <link target="_blank">/app/mikestrava/strava__stats_for_longest_ride_on_a_given_day?earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Distance heatmap</title>
+      <viz type="calendar_heatmap_app.calendar_heatmap">
+        <search>
+          <query>index=strava type=*Ride 
+| dedup _time 
+| eval dist = round(distance/1000,2)
+| timechart span=1d  max(dist) AS Km, max(pr_count) AS "Personal Records", max(kudos_count) as "Kudos Received"</query>
+          <earliest>0</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="calendar_heatmap_app.calendar_heatmap.cellPadding">2</option>
+        <option name="calendar_heatmap_app.calendar_heatmap.cellSize">15</option>
+        <option name="calendar_heatmap_app.calendar_heatmap.cellStyle">square</option>
+        <option name="calendar_heatmap_app.calendar_heatmap.legendType">independent</option>
+        <option name="calendar_heatmap_app.calendar_heatmap.maxColor">#207470</option>
+        <option name="calendar_heatmap_app.calendar_heatmap.minColor">#F9FFBA</option>
+        <option name="calendar_heatmap_app.calendar_heatmap.numOfBins">9</option>
+        <option name="calendar_heatmap_app.calendar_heatmap.showLegend">true</option>
+        <option name="calendar_heatmap_app.calendar_heatmap.splitMonths">false</option>
+        <option name="drilldown">all</option>
+        <option name="height">534</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <drilldown>
+          <link target="_blank">/app/mikestrava/strava__stats_for_longest_ride_on_a_given_day?earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </viz>
+    </panel>
+    <panel>
+      <title>Calendar of rides</title>
+      <viz type="calendar_app.calendar">
+        <search>
+          <query>index=strava type=*Ride
+| dedup _time 
+| timechart span=1d count by name limit=0</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="calendar_app.calendar.calendarView">month</option>
+        <option name="calendar_app.calendar.showWeekNumbers">false</option>
+        <option name="calendar_app.calendar.showWeekends">true</option>
+        <option name="drilldown">all</option>
+        <option name="height">532</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <drilldown>
+          <set token="selected_value">$click.value$</set>
+          <link target="_blank">/app/mikestrava/strava__stats_for_longest_ride_on_a_given_day?earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </viz>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>All segments by number of times ridden</title>
+      <table>
+        <title>Strava segments count</title>
+        <search ref="Strava segments count"></search>
+        <option name="drilldown">cell</option>
+        <drilldown>
+          <link target="_blank">/app/mikestrava/strava_details_for_a_given_segment?clientTok=%22$row.seg_name$%22</link>
+        </drilldown>
+      </table>
+    </panel>
+    <panel>
+      <title>Latest Rides</title>
+      <table>
+        <search>
+          <query>index=strava type=* sourcetype=strava:activities 
+| dedup _time 
+| eval average_speed = (average_speed * 3.60)."Km/h"
+| eval Distance = round(distance / 1000,1)."Km" 
+| rex field=start_date_local "(\d{4}-\d{2}-(?&lt;day&gt;\d{2}).*)" 
+| eval suffix=case(((day &gt;=4) AND (day &lt;=20)) OR ((day&gt;=24) AND (day &lt;= 30)),"th",(day%10)==1, "st",(day%10)==2, "nd" ,(day%10)==3, "rd") 
+| eval Date=strftime(strptime(start_date_local, "%Y-%m-%dT%H:%M:%S"),"%a %-d"+suffix+" %b %Y (%H:%M:%S)") 
+| eval DurationDisplay=tostring(moving_time,"duration") 
+| eval duration2=replace(DurationDisplay,"(\d+):(\d+):(\d+)","\1h \2m \3s") 
+| eval total_elevation_gain=(round(total_elevation_gain,0))."m"
+| eval t=_time
+| rename DurationDisplay AS "Moving Time" , name as "Ride name", average_speed AS "Average Speed", total_elevation_gain AS "Elevation Gain"
+| table t, Date, "Ride name", "Moving Time" , Distance, "Average Speed", "Elevation Gain"
+| sort -start_date_local</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">row</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <fields>["Date","Ride name", "Moving Time" , "Distance", "Average Speed", "Elevation Gain"]</fields>
+        <drilldown target="blank">
+          <eval token="e">'row.t'</eval>
+          <eval token="l">relative_time('row.t',"+30m")</eval>
+          <link>
+            <![CDATA[/app/mikestrava/strava__stats_for_longest_ride_on_a_given_day?&earliest=$e$&latest=$l$]]>
+          </link>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+</form>

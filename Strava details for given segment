@@ -1,0 +1,159 @@
+<dashboard>
+  <label>Strava details for given segment</label>
+  <row>
+    <panel>
+      <title>"$title$" ($distance$m)</title>
+      <table>
+        <search>
+          <done>
+            <condition match=" 'job.resultCount' &gt; 0">
+              <set token="title">$result.seg_name$</set>
+              <set token="label">$result.seg_name$</set>
+              <set token="distance">$result.distance$</set>
+            </condition>
+            <condition>
+              <set token="title">"No Data"</set>
+              <set token="label">"No Data"</set>
+            </condition>
+          </done>
+          <query>index=strava type=*Ride 
+| spath 
+| rename segment_efforts{}.name AS seg_name, segment_efforts{}.moving_time AS moving_time, segment_efforts{}.start_date_local AS segment_time, segment_efforts{}.average_watts AS average_watts, segment_efforts{}.segment.distance AS distance
+
+| eval x=mvzip(mvzip(mvzip(mvzip(seg_name,moving_time), segment_time), average_watts), distance)
+| mvexpand x 
+| eval x = split(x,",") 
+| eval seg_name=mvindex(x,0) 
+| eval moving_time=mvindex(x,1)
+| eval segment_time=mvindex(x,2) 
+| eval average_watts=mvindex(x,3)
+| eval average_watts=round(average_watts,0)
+| eval distance=round(tonumber(mvindex(x,4)),1)
+| eval avg_speed=round((distance/(moving_time)*3.6),1)
+| eval moving_time=strftime(moving_time, "%-Mm %Ss")
+| eval type=typeof(moving_time)
+| where seg_name=$clientTok$
+| mvexpand name
+| dedup segment_time
+| eval date=strftime(strptime(segment_time, "%Y-%m-%dT%H:%M:%S"),"%A %-d %b %Y (%H:%M:%S)")
+| rename name AS Ride, avg_speed AS "Avg Speed (Km/h)", average_watts AS "Avg Watts"
+| table date,seg_name,moving_time,Ride,"Avg Watts", distance,  "Avg Speed (Km/h)"
+| sort moving_time</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <fields>["date","moving_time","Ride","Avg Watts","Avg Speed (Km/h)"]</fields>
+      </table>
+    </panel>
+    <panel>
+      <title>Segment map for $title$</title>
+      <viz type="leaflet_maps_app.leaflet_maps">
+        <search>
+          <query>index=strava type=*Ride 
+| spath 
+| rename segment_efforts{}.name AS seg_name, segment_efforts{}.moving_time AS moving_time, segment_efforts{}.start_date_local AS segment_time, segment_efforts{}.average_watts AS average_watts, segment_efforts{}.segment.distance AS distance, segment_efforts{}.segment.start_latitude AS start_lat, segment_efforts{}.segment.start_longitude AS start_lon, segment_efforts{}.segment.end_latitude AS end_lat, segment_efforts{}.segment.end_longitude AS end_lon 
+| eval x=mvzip(mvzip(mvzip(mvzip(mvzip(mvzip(mvzip(seg_name,mvzip(moving_time, segment_time)), average_watts), distance), start_lat), start_lon), end_lat), end_lon) 
+| mvexpand x 
+| eval x = split(x,",") 
+| eval seg_name=mvindex(x,0) 
+| eval moving_time=mvindex(x,1) 
+| eval segment_time=mvindex(x,2) 
+| eval average_watts=mvindex(x,3) 
+| eval distance=round(tonumber(mvindex(x,4)),1) 
+| eval start_lat=mvindex(x,5) 
+| eval start_lon=mvindex(x,6) 
+| eval end_lat=mvindex(x,7) 
+| eval end_lon=mvindex(x,8) 
+| eval type=typeof(moving_time) 
+| where seg_name=$clientTok$
+| eval start_latlon=mvzip(start_lat, start_lon) 
+| eval start_col="green", end_col="red"
+| eval start_latlon_col=mvzip(mvzip(start_lat, start_lon),start_col) 
+| eval end_latlon=mvzip(end_lat, end_lon) 
+| eval end_latlon_col=mvzip(mvzip(end_lat, end_lon),end_col) 
+| eval latlon=mvappend(start_latlon,end_latlon) 
+| eval latlon_col=mvappend(start_latlon_col,end_latlon_col)
+| dedup seg_name 
+| mvexpand latlon_col
+| eval latlon=split(latlon_col,",") 
+| eval latitude=mvindex(latlon,0) 
+| eval longitude=mvindex(latlon,1) 
+| eval markerColor=mvindex(latlon,2) 
+| eval date=strftime(strptime(segment_time, "%Y-%m-%dT%H:%M:%S"),"%A %d-%m-%Y at %H:%M:%S") 
+| eval markerType="svg", icon="bicycle" 
+
+| table segment_time,date,seg_name,moving_time,average_watts, distance,start_lat,latitude,longitude,  markerType,markerColor,icon
+| sort moving_time</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="leaflet_maps_app.leaflet_maps.allPopups">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.animate">1</option>
+        <option name="leaflet_maps_app.leaflet_maps.autoFitAndZoom">1</option>
+        <option name="leaflet_maps_app.leaflet_maps.autoFitAndZoomDelay">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.bingMaps">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.bingMapsLabelLanguage">en-US</option>
+        <option name="leaflet_maps_app.leaflet_maps.bingMapsTileLayer">CanvasLight</option>
+        <option name="leaflet_maps_app.leaflet_maps.cluster">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.contextMenu">1</option>
+        <option name="leaflet_maps_app.leaflet_maps.criticalThreshold">80</option>
+        <option name="leaflet_maps_app.leaflet_maps.defaultHeight">600</option>
+        <option name="leaflet_maps_app.leaflet_maps.drilldown">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.fullScreen">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.googlePlacesPosition">topleft</option>
+        <option name="leaflet_maps_app.leaflet_maps.googlePlacesSearch">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.googlePlacesZoomLevel">12</option>
+        <option name="leaflet_maps_app.leaflet_maps.layerControl">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.layerControlCollapsed">1</option>
+        <option name="leaflet_maps_app.leaflet_maps.mapCenterLat">-51</option>
+        <option name="leaflet_maps_app.leaflet_maps.mapCenterLon">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.mapCenterZoom">7</option>
+        <option name="leaflet_maps_app.leaflet_maps.mapTile">http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png</option>
+        <option name="leaflet_maps_app.leaflet_maps.maxClusterRadius">80</option>
+        <option name="leaflet_maps_app.leaflet_maps.maxSpiderfySize">100</option>
+        <option name="leaflet_maps_app.leaflet_maps.maxZoom">19</option>
+        <option name="leaflet_maps_app.leaflet_maps.measureActiveColor">#00ff00</option>
+        <option name="leaflet_maps_app.leaflet_maps.measureCompletedColor">#0066ff</option>
+        <option name="leaflet_maps_app.leaflet_maps.measureIconPosition">topright</option>
+        <option name="leaflet_maps_app.leaflet_maps.measureLocalization">en</option>
+        <option name="leaflet_maps_app.leaflet_maps.measurePrimaryAreaUnit">acres</option>
+        <option name="leaflet_maps_app.leaflet_maps.measurePrimaryLengthUnit">feet</option>
+        <option name="leaflet_maps_app.leaflet_maps.measureSecondaryAreaUnit">sqmiles</option>
+        <option name="leaflet_maps_app.leaflet_maps.measureSecondaryLengthUnit">miles</option>
+        <option name="leaflet_maps_app.leaflet_maps.measureTool">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.minZoom">1</option>
+        <option name="leaflet_maps_app.leaflet_maps.multiplePopups">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.pathColorList">#0003F0,#D43C29,darkgreen,0xe2d400,darkred,#23A378</option>
+        <option name="leaflet_maps_app.leaflet_maps.permanentTooltip">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.rangeOneBgColor">#B5E28C</option>
+        <option name="leaflet_maps_app.leaflet_maps.rangeOneFgColor">#6ECC39</option>
+        <option name="leaflet_maps_app.leaflet_maps.rangeThreeBgColor">#FD9C73</option>
+        <option name="leaflet_maps_app.leaflet_maps.rangeThreeFgColor">#F18017</option>
+        <option name="leaflet_maps_app.leaflet_maps.rangeTwoBgColor">#F1D357</option>
+        <option name="leaflet_maps_app.leaflet_maps.rangeTwoFgColor">#F0C20C</option>
+        <option name="leaflet_maps_app.leaflet_maps.refreshInterval">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.scrollWheelZoom">1</option>
+        <option name="leaflet_maps_app.leaflet_maps.showPathLines">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.singleMarkerMode">0</option>
+        <option name="leaflet_maps_app.leaflet_maps.spiderfyDistanceMultiplier">1</option>
+        <option name="leaflet_maps_app.leaflet_maps.stickyTooltip">1</option>
+        <option name="leaflet_maps_app.leaflet_maps.warningThreshold">55</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </viz>
+    </panel>
+  </row>
+</dashboard>
