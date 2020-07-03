@@ -7,7 +7,7 @@
 | rex field=start_date_local "(\d{4}-\d{2}-(?&lt;day&gt;\d{2}).*)" 
 | eval suffix=case(((day &gt;=4) AND (day &lt;=20)) OR ((day&gt;=24) AND (day &lt;= 30)),"th",(day%10)==1, "st",(day%10)==2, "nd" ,(day%10)==3, "rd") 
 | eval mydate=strftime(strptime(start_date_local, "%Y-%m-%dT%H:%M:%S"),"%A %-d"+suffix+" %b %Y") 
-| table moving, elapsed, dist, total_elevation_gain, avg_speed, mx_speed, calories, name, mydate, kudos_count
+| table moving, elapsed, dist, total_elevation_gain, avg_speed, mx_speed, calories, name, mydate, kudos_count, photos.primary.urls.600, photos.count
 | sort - dist</query>
     <earliest></earliest>
     <latest></latest>
@@ -16,10 +16,12 @@
         <set token="title">$result.name$</set>
         <set token="label">$result.name$</set>
         <set token="date">$result.mydate$</set>
+        <set token="url">$result.photos.primary.urls.600$</set>
       </condition>
       <condition>
         <set token="title">"No Data"</set>
         <set token="label">"No Data"</set>
+        <unset token="url"></unset>
       </condition>
     </done>
   </search>
@@ -148,6 +150,21 @@
         <option name="trellis.scales.shared">1</option>
         <option name="trellis.size">medium</option>
       </viz>
+    </panel>
+    <panel depends="$show_table$">
+      <title>Primary photo</title>
+        <search base="ride_time">
+    <query>| fields photos.count</query>
+    <progress>
+     <condition match="'result.photos.count'!=&quot;0&quot;">
+      <set token="show_table">true</set>
+     </condition>
+    </progress>
+  </search>
+      <html>
+<!-- Use an image from the current app's /static/images directory -->
+        <img src="$url$"/>
+      </html>
     </panel>
   </row>
   <row>
